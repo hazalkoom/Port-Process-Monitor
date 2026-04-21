@@ -1,22 +1,36 @@
 import { Component } from "@angular/core";
-import { RouterOutlet } from "@angular/router";
+import { CommonModule } from '@angular/common';
 import { invoke } from "@tauri-apps/api/core";
 
 @Component({
-  selector: "app-root",
-  imports: [RouterOutlet],
-  templateUrl: "./app.component.html",
-  styleUrl: "./app.component.css",
+  selector: 'app-root',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <main style="padding: 20px; font-family: sans-serif;">
+      <h1>Port Inspector Setup Test</h1>
+      
+      <button 
+        (click)="testBridge()" 
+        style="padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px;">
+        Fetch Ports from Rust
+      </button>
+
+      <pre style="background: #f4f4f4; padding: 15px; margin-top: 20px;">{{ ports | json }}</pre>
+    </main>
+  `,
 })
+
 export class AppComponent {
-  greetingMessage = "";
+  ports: any[] = [];
 
-  greet(event: SubmitEvent, name: string): void {
-    event.preventDefault();
-
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    invoke<string>("greet", { name }).then((text) => {
-      this.greetingMessage = text;
-    });
+  async testBridge() {
+    try {
+      // THIS IS THE MAGIC LINE. It calls the 'get_ports' macro in your Rust main.rs!
+      this.ports = await invoke('get_ports');
+      console.log('Received from Rust:', this.ports);
+    } catch (error) {
+      console.error('Failed to invoke Rust command:', error);
+    }
   }
 }
